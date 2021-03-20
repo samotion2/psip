@@ -1,48 +1,42 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using PcapDotNet.Base;
 using PcapDotNet.Core;
 using PcapDotNet.Packets;
-using PcapDotNet.Packets.Arp;
-using PcapDotNet.Packets.Dns;
 using PcapDotNet.Packets.Ethernet;
-using PcapDotNet.Packets.Gre;
-using PcapDotNet.Packets.Http;
 using PcapDotNet.Packets.Icmp;
-using PcapDotNet.Packets.Igmp;
 using PcapDotNet.Packets.IpV4;
-using PcapDotNet.Packets.IpV6;
-using PcapDotNet.Packets.Transport;
 
 namespace psip {
 
     public partial class Form1 : Form {
         
         public List<CAMTable> Data { get; set; }
-        public void updateUi(int[,] arr, int i) {
+        public int time = 10;
 
+        //aktualizuje statistiky
+        public void updateStats(int[,] arr, int i) {
             TextBox[] textboxarr = new TextBox[4] {textBox1, textBox2, textBox3, textBox4};
 
             textboxarr[i].Invoke(new MethodInvoker(() => {
                 textboxarr[i].Text = "Ethernet: " + arr[i, 0] + "\r\nARP: " + arr[i, 1] + "\r\nIP: " + arr[i, 2] + "\r\nTCP: " + arr[i, 3] + "\r\nUDP: " + arr[i, 4] + "\r\nICMP: " + arr[i, 5] + "\r\nHTTP: " + arr[i, 6];
             }));
-
         }
 
+        //inicializacia
         public Form1() {
-            Data = CAMTable.InitTable();
+            Data = Controller.InitTable();
             InitializeComponent();
         }
 
         public List<CAMTable> getData() {
             return this.Data;
+        }
+
+        public int getTime() {
+            return this.time;
         }
 
         private void button1_Click(object sender, EventArgs e) {
@@ -105,11 +99,10 @@ namespace psip {
 
                 return builder.Build(DateTime.Now);
             }
-
-
         }
 
-        public void updateTable() {
+        //obnovi tabulku
+        public void refreshTable() {
             var data = this.Data;
             
             dataGridView1.Invoke(new MethodInvoker(() => {
@@ -120,49 +113,44 @@ namespace psip {
                 foreach (DataGridViewRow row in dataGridView1.Rows)
                     row.Cells["Id"].Value = (row.Index + 1).ToString();
             }));
-            //aktualizuje data
         }
 
-        private void textBox1_TextChanged(object sender, EventArgs e) {
-
-        }
-
-        private void button3_Click(object sender, EventArgs e) {
+        //resetuju sa statisktiky pre textbox[i]
+        private void resetButton_Click(object sender, EventArgs e) {
             for(int i = 0; i < 4; i ++) {
                 Controller.reset(i);
             }
         }
 
-        private void label1_Click(object sender, EventArgs e) {
-
-        }
-
-        private void textBox4_TextChanged(object sender, EventArgs e) {
-
-        }
-
-        private void textBox3_TextChanged(object sender, EventArgs e) {
-
-        }
-
-        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e) {
-
-        }
-
-        private void button2_Click(object sender, EventArgs e) {
-
-            CAMTable.addToTable(this.Data, 100, new MacAddress("aa:aa:aa:aa:aa:aa"));
+        //vyprazdni sa CAM tabulka
+        private void clearButton_Click(object sender, EventArgs e) {
             var data = this.Data;
+
+            foreach (var item in data.ToList()) {
+                data.Remove(item);
+            }
 
             //aktualizuje data
             dataGridView1.DataSource = null;
             dataGridView1.DataSource = data;
-            
-            //ocisluje riadky
-            foreach (DataGridViewRow row in dataGridView1.Rows)
-                row.Cells["Id"].Value = (row.Index + 1).ToString();
-            
-            //data.ForEach(item => Console.Write(item + ","));
+        }
+
+        //nastavi dlzku casovacu ak je zadana ako int
+        private void timerButton_Click(object sender, EventArgs e) {
+            try {
+                this.time = Int32.Parse(textBox5.Text);
+                foreach (var item in this.Data.ToList()) {
+                   item.Timer = this.time;
+                }
+                refreshTable();
+            } catch {
+                Console.WriteLine("Zle zadane cislo, platny iba format int");
+            }
+        }
+
+        private void textBox5_MouseDown(object sender, MouseEventArgs e) {
+            textBox5.Text = "";
+            textBox5.ForeColor = Color.Black;
         }
     }
 }

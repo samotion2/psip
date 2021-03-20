@@ -31,7 +31,7 @@ namespace psip
         {
             this.button1 = new System.Windows.Forms.Button();
             this.textBox1 = new System.Windows.Forms.TextBox();
-            this.button3 = new System.Windows.Forms.Button();
+            this.resetButton = new System.Windows.Forms.Button();
             this.textBox2 = new System.Windows.Forms.TextBox();
             this.textBox3 = new System.Windows.Forms.TextBox();
             this.textBox4 = new System.Windows.Forms.TextBox();
@@ -42,7 +42,10 @@ namespace psip
             this.label5 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
-            this.button2 = new System.Windows.Forms.Button();
+            this.clearButton = new System.Windows.Forms.Button();
+            this.textBox5 = new System.Windows.Forms.TextBox();
+            this.timerButton = new System.Windows.Forms.Button();
+            this.label7 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -61,25 +64,26 @@ namespace psip
             this.textBox1.Location = new System.Drawing.Point(161, 50);
             this.textBox1.Multiline = true;
             this.textBox1.Name = "textBox1";
+            this.textBox1.ReadOnly = true;
             this.textBox1.Size = new System.Drawing.Size(118, 147);
             this.textBox1.TabIndex = 1;
-            this.textBox1.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
             // 
-            // button3
+            // resetButton
             // 
-            this.button3.Location = new System.Drawing.Point(27, 68);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(75, 23);
-            this.button3.TabIndex = 3;
-            this.button3.Text = "Reset";
-            this.button3.UseVisualStyleBackColor = true;
-            this.button3.Click += new System.EventHandler(this.button3_Click);
+            this.resetButton.Location = new System.Drawing.Point(27, 68);
+            this.resetButton.Name = "resetButton";
+            this.resetButton.Size = new System.Drawing.Size(75, 23);
+            this.resetButton.TabIndex = 3;
+            this.resetButton.Text = "Reset";
+            this.resetButton.UseVisualStyleBackColor = true;
+            this.resetButton.Click += new System.EventHandler(this.resetButton_Click);
             // 
             // textBox2
             // 
             this.textBox2.Location = new System.Drawing.Point(285, 50);
             this.textBox2.Multiline = true;
             this.textBox2.Name = "textBox2";
+            this.textBox2.ReadOnly = true;
             this.textBox2.Size = new System.Drawing.Size(118, 147);
             this.textBox2.TabIndex = 4;
             // 
@@ -88,18 +92,18 @@ namespace psip
             this.textBox3.Location = new System.Drawing.Point(528, 50);
             this.textBox3.Multiline = true;
             this.textBox3.Name = "textBox3";
+            this.textBox3.ReadOnly = true;
             this.textBox3.Size = new System.Drawing.Size(118, 147);
             this.textBox3.TabIndex = 5;
-            this.textBox3.TextChanged += new System.EventHandler(this.textBox3_TextChanged);
             // 
             // textBox4
             // 
             this.textBox4.Location = new System.Drawing.Point(652, 50);
             this.textBox4.Multiline = true;
             this.textBox4.Name = "textBox4";
+            this.textBox4.ReadOnly = true;
             this.textBox4.Size = new System.Drawing.Size(118, 147);
             this.textBox4.TabIndex = 6;
-            this.textBox4.TextChanged += new System.EventHandler(this.textBox4_TextChanged);
             // 
             // label1
             // 
@@ -109,7 +113,6 @@ namespace psip
             this.label1.Size = new System.Drawing.Size(42, 17);
             this.label1.TabIndex = 7;
             this.label1.Text = "Port1";
-            this.label1.Click += new System.EventHandler(this.label1_Click);
             // 
             // label2
             // 
@@ -165,24 +168,57 @@ namespace psip
             this.dataGridView1.RowTemplate.Height = 24;
             this.dataGridView1.Size = new System.Drawing.Size(609, 320);
             this.dataGridView1.TabIndex = 13;
-            this.dataGridView1.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridView1_CellContentClick);
             // 
-            // button2
+            // clearButton
             // 
-            this.button2.Location = new System.Drawing.Point(27, 410);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(75, 23);
-            this.button2.TabIndex = 14;
-            this.button2.Text = "Clear";
-            this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.button2_Click);
+            this.clearButton.Location = new System.Drawing.Point(27, 501);
+            this.clearButton.Name = "clearButton";
+            this.clearButton.Size = new System.Drawing.Size(75, 23);
+            this.clearButton.TabIndex = 14;
+            this.clearButton.Text = "Clear";
+            this.clearButton.UseVisualStyleBackColor = true;
+            this.clearButton.Click += new System.EventHandler(this.clearButton_Click);
+            // 
+            // textBox5
+            // 
+            this.textBox5.AccessibleDescription = "";
+            this.textBox5.AccessibleName = "";
+            this.textBox5.ForeColor = System.Drawing.Color.Gray;
+            this.textBox5.Location = new System.Drawing.Point(27, 384);
+            this.textBox5.Name = "textBox5";
+            this.textBox5.Size = new System.Drawing.Size(75, 22);
+            this.textBox5.TabIndex = 15;
+            this.textBox5.Text = "Duration";
+            this.textBox5.MouseDown += new System.Windows.Forms.MouseEventHandler(this.textBox5_MouseDown);
+            // 
+            // timerButton
+            // 
+            this.timerButton.Location = new System.Drawing.Point(27, 355);
+            this.timerButton.Name = "timerButton";
+            this.timerButton.Size = new System.Drawing.Size(75, 23);
+            this.timerButton.TabIndex = 16;
+            this.timerButton.Text = "Set timer";
+            this.timerButton.UseVisualStyleBackColor = true;
+            this.timerButton.Click += new System.EventHandler(this.timerButton_Click);
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(424, 225);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(77, 17);
+            this.label7.TabIndex = 17;
+            this.label7.Text = "CAM Table";
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(804, 593);
-            this.Controls.Add(this.button2);
+            this.Controls.Add(this.label7);
+            this.Controls.Add(this.timerButton);
+            this.Controls.Add(this.textBox5);
+            this.Controls.Add(this.clearButton);
             this.Controls.Add(this.dataGridView1);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.label5);
@@ -193,7 +229,7 @@ namespace psip
             this.Controls.Add(this.textBox4);
             this.Controls.Add(this.textBox3);
             this.Controls.Add(this.textBox2);
-            this.Controls.Add(this.button3);
+            this.Controls.Add(this.resetButton);
             this.Controls.Add(this.textBox1);
             this.Controls.Add(this.button1);
             this.Name = "Form1";
@@ -208,7 +244,7 @@ namespace psip
 
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.TextBox textBox1;
-        private System.Windows.Forms.Button button3;
+        private System.Windows.Forms.Button resetButton;
         private System.Windows.Forms.TextBox textBox2;
         private System.Windows.Forms.TextBox textBox3;
         private System.Windows.Forms.TextBox textBox4;
@@ -219,7 +255,10 @@ namespace psip
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.DataGridView dataGridView1;
-        private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.Button clearButton;
+        private System.Windows.Forms.TextBox textBox5;
+        private System.Windows.Forms.Button timerButton;
+        private System.Windows.Forms.Label label7;
     }
 }
 

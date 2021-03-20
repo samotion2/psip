@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Threading;
 using PcapDotNet.Core;
 using PcapDotNet.Packets;
 using PcapDotNet.Packets.IpV4;
-using PcapDotNet.Packets.Transport;
 using PcapDotNet.Packets.Ethernet;
-using System.Diagnostics;
 
 namespace psip {
     public class ThreadWork {
@@ -19,28 +16,21 @@ namespace psip {
                 PacketCommunicatorReceiveResult result = communicator.ReceivePacket(out packet);
                 switch (result) {
                     case PacketCommunicatorReceiveResult.Timeout:
-                        // Timeout elapsed
                         continue;
-                    case PacketCommunicatorReceiveResult.Ok:
-                        con.updateStats(packet, i);
+                    case PacketCommunicatorReceiveResult.Ok: //ak je packet v poriadku, zapocitaju sa jeho statistiky a ak sa ma predoslat tak sa preposle
+                        con.checkStats(packet, i);
                         con.updateTable(i, packet.Ethernet.Source);
                         //Console.WriteLine(packet.Timestamp.ToString("yyyy-MM-dd hh:mm:ss.fff") + " length:" + packet.Length);
-                        //Stopwatch sw = new Stopwatch();
-                        //->>>>>>>pomaly retos fix trba tu->>>>>>>>>>>>>
-                        //sw.Start();
-                        if (con.isInTable(i, packet.Ethernet.Destination)) {
-                            //statistiky pre druhy kidos
+                        if (con.isInTable(i, packet.Ethernet.Destination)) {//zisti ci sa ma packet preposlat
+                            //odoslanie packet + jeho statistiky
                             communicator1.SendPacket(packet);
-                            con.updateStats(packet, i + 1);
+                            con.checkStats(packet, i + 1);
                             break;
                         }
-                        //sw.Stop();
-                        //Console.WriteLine("Elapsed={0}", sw.Elapsed);
-
                         //Console.WriteLine("SRC_MAC: " + packet.Ethernet.Source);
                         break;
                     default:
-                        throw new InvalidOperationException("The result " + result + " shoudl never be reached here");
+                        throw new InvalidOperationException("Chyba: " + result);
                 }
             } while (true);   
         }
@@ -52,7 +42,8 @@ namespace psip {
         public Controller(Form1 form1) {
             form = form1;
         }
-        public void updateStats(Packet packet, int i) {
+        //zisti sattistiky o packete
+        public void checkStats(Packet packet, int i) {
             if (packet.IsValid) {
                 if (packet.DataLink.Kind == DataLinkKind.Ethernet)
                     arr[i, 0] += 1;
@@ -68,26 +59,29 @@ namespace psip {
                     arr[i, 5] += 1;
                 if (packet.Ethernet.IpV4.Protocol == IpV4Protocol.Tcp && (packet.Ethernet.IpV4.Tcp.SourcePort == 80 || packet.Ethernet.IpV4.Tcp.DestinationPort == 80))
                     arr[i, 6] += 1;
-
-                form.updateUi(arr, i);
+                //aktualizacia statistik
+                form.updateStats(arr, i);
             }
         }
+
+        //reset statistik
         public static void reset(int x) {
             for(int i = 0; i < 7; i++) {
                 arr[x, i] = 0;
             }
-            form.updateUi(arr, x);
+            form.updateStats(arr, x);
         }
+
         public void updateTable(int i, MacAddress mac) {
-            //Console.WriteLine(mac);
-            CAMTable.addToTable(form.getData(), i, mac);
-            form.updateTable();
+            addToTable(form.getData(), i, mac);
+            form.refreshTable();
         }
+
+        //zisti ci sa ma packet posielat alebo nie za pomoci CAMTable
         public bool isInTable(int i, MacAddress mac) {
             var temp = form.getData();
             int count = 0;
 
-            //Console.WriteLine(temp + ",");
             //ak sa mac nenachadza v tabulke vrati true
             foreach (var item in temp) {
                 if (item.Mac.Equals(mac))
@@ -96,9 +90,8 @@ namespace psip {
             if (count == 0) {
                 return true;
             }
-
-            
-            //ak sa max nachadza v tabulke a zaroven sa nenachadza na rovnakom porte na ktory dosiel packet, vrati true
+          
+            //ak sa MAC nachadza v tabulke a zaroven sa nenachadza na rovnakom porte na ktory dosiel packet, vrati true
             foreach (var item in temp) {
                 if (item.Mac.Equals(mac) && (item.Port != i)) {
                     return true;
@@ -106,36 +99,57 @@ namespace psip {
             }
             return false;
         }
+
+        //prida src_mac do tabulky ak splna poziadavky
+        public static List<CAMTable> addToTable(List<CAMTable> list1, int i, MacAddress mac) {
+            CAMTable list = new CAMTable() { Id = "", Port = i, Mac = mac, Timer = form.getTime() };
+
+            //ak sa src_mac uz nachadza v liste neprida sa ale obnovi sa timer
+            try {
+                foreach (var item in list1) {
+                    if (item.Mac == mac) {
+                        item.Timer = form.getTime();
+                        return list1;
+                    }
+                }
+            } catch { }
+
+            //ak sa src_mac nenachadza v liste prida sa
+            list1.Add(list);
+            return list1;
+        }
+        //inicializacia CAMTable
+        public static List<CAMTable> InitTable() {
+            var list = new List<CAMTable>();
+            return list;
+        }
     }
 
     public class CAMTable {
         public string Id { get; set; }
         public int Port { get; set; }
         public MacAddress Mac { get; set; }
-        public string Timer { get; set; }
+        public int Timer { get; set; }
+    }
 
-        public static List<CAMTable> InitTable() {
-            var list = new List<CAMTable>();
-            list.Add(new CAMTable() { Id = null, Port = 100, Mac = new MacAddress("aa:aa:aa:aa:aa:aa"), Timer = "1" });
-            return list;
-
-        }
-
-        public static List<CAMTable> addToTable(List<CAMTable> list1, int i, MacAddress mac) {
-            CAMTable list = new CAMTable() { Id = "", Port = i, Mac = mac, Timer = "1" };
-
-
-            //TU PUSTIT KIDKOSA
-            //ak sa src_mac uz nachadza v liste neprida sa
-            try {
-                foreach (var item in list1) {
-                    if (item.Mac == mac)
-                        return list1;
+    //sluzi na aktualizaciu casu a nasledne vymazanie zaznamu po uplynuti casu
+    public class CAMTimer {
+        public static void timer(Form1 form) {
+            var data = form.getData();
+            Console.WriteLine(data.Count + "---------");
+            while (true) {
+                if (data.Count > 0) {
+                    foreach (var item in data.ToList()) {
+                        if (item.Timer == 0) {
+                            data.Remove(item);
+                        }
+                        else 
+                            item.Timer -= 1;
+                    }
+                    form.refreshTable();
+                    Thread.Sleep(1000);
                 }
-            } catch {}
-            
-            list1.Add(list);
-            return list1;
+            }
         }
     }
 
@@ -147,17 +161,21 @@ namespace psip {
 
             IList<LivePacketDevice> allDevices = LivePacketDevice.AllLocalMachine;
 
+            //konfiguracia communicatorov
             PacketCommunicator communicator = allDevices[0].Open(65536, PacketDeviceOpenAttributes.Promiscuous | PacketDeviceOpenAttributes.NoCaptureLocal, 1);
             PacketCommunicator communicator1 = allDevices[1].Open(65536, PacketDeviceOpenAttributes.Promiscuous | PacketDeviceOpenAttributes.NoCaptureLocal, 1);
 
             Form1 form = new Form1();
             Controller con = new Controller(form);
 
-            //z 1 na 2
+            //spustenie snifferov na nasich 2 interfacoch
             Thread thread = new Thread(() => ThreadWork.DoWork(communicator1, communicator, con, 0));
             thread.Start();
             Thread thread2 = new Thread(() => ThreadWork.DoWork(communicator, communicator1, con, 2));
             thread2.Start();
+            //timer thread
+            Thread thread3 = new Thread(() => CAMTimer.timer(form));
+            thread3.Start();
 
             Application.Run(form);
         }
