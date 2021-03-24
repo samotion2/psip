@@ -10,7 +10,7 @@ using PcapDotNet.Packets.Ethernet;
 
 namespace psip {
     public class ThreadWork {
-        public static void DoWork(PacketCommunicator communicator, PacketCommunicator communicator1, Controller con, int i) {
+        public static void doWork(PacketCommunicator communicator, PacketCommunicator communicator1, Controller con, int i) {
             Packet packet;
             do {
                 PacketCommunicatorReceiveResult result = communicator.ReceivePacket(out packet);
@@ -20,14 +20,13 @@ namespace psip {
                     case PacketCommunicatorReceiveResult.Ok: //ak je packet v poriadku, zapocitaju sa jeho statistiky a ak sa ma predoslat tak sa preposle
                         con.checkStats(packet, i);
                         con.updateTable(i, packet.Ethernet.Source);
-                        //Console.WriteLine(packet.Timestamp.ToString("yyyy-MM-dd hh:mm:ss.fff") + " length:" + packet.Length);
+
                         if (con.isInTable(i, packet.Ethernet.Destination)) {//zisti ci sa ma packet preposlat
-                            //odoslanie packet + jeho statistiky
-                            communicator1.SendPacket(packet);
+                            communicator1.SendPacket(packet); //odoslanie packet + jeho statistiky
                             con.checkStats(packet, i + 1);
                             break;
                         }
-                        //Console.WriteLine("SRC_MAC: " + packet.Ethernet.Source);
+
                         break;
                     default:
                         throw new InvalidOperationException("Chyba: " + result);
@@ -42,8 +41,10 @@ namespace psip {
         public Controller(Form1 form1) {
             form = form1;
         }
-        //zisti sattistiky o packete
+        //zisti sattistiky o packete ak sa nejdena o packet vygenerovany nasim interfacom
         public void checkStats(Packet packet, int i) {
+            if (packet.Ethernet.Source.Equals(new MacAddress("02:00:4C:4F:4F:50"))) //packet interfacu
+                return;
             if (packet.IsValid) {
                 if (packet.DataLink.Kind == DataLinkKind.Ethernet)
                     arr[i, 0] += 1;
@@ -72,18 +73,21 @@ namespace psip {
             form.updateStats(arr, x);
         }
 
+        //aktualizuje tabulku, packety patriace nasim interfacom ignoruje
         public void updateTable(int i, MacAddress mac) {
+            if (mac.Equals(new MacAddress("02:00:4C:4F:4F:50"))) //packet interfacu
+                return;
             addToTable(form.getData(), i, mac);
             form.refreshTable();
         }
 
         //zisti ci sa ma packet posielat alebo nie za pomoci CAMTable
         public bool isInTable(int i, MacAddress mac) {
-            var temp = form.getData();
+            var data = form.getData();
             int count = 0;
 
-            //ak sa mac nenachadza v tabulke vrati true
-            foreach (var item in temp) {
+            //ak sa dst_Mac nenachadza v tabulke vrati true
+            foreach (var item in data) {
                 if (item.Mac.Equals(mac))
                     count++;
             }
@@ -91,8 +95,8 @@ namespace psip {
                 return true;
             }
           
-            //ak sa MAC nachadza v tabulke a zaroven sa nenachadza na rovnakom porte na ktory dosiel packet, vrati true
-            foreach (var item in temp) {
+            //ak sa dst_Mac nachadza v tabulke ale na inom porte(mozna vymena kablov), vymeni sa port
+            foreach (var item in data) {
                 if (item.Mac.Equals(mac) && (item.Port != i)) {
                     return true;
                 }
@@ -107,8 +111,12 @@ namespace psip {
             //ak sa src_mac uz nachadza v liste neprida sa ale obnovi sa timer
             try {
                 foreach (var item in list1) {
-                    if (item.Mac == mac) {
+                    if (item.Mac == mac && item.Port == i) {// src_mac sa nachadza na rovnakom porte - aktualizacia timeru
                         item.Timer = form.getTime();
+                        return list1;
+                    }
+                    if (item.Mac == mac && item.Port != i) { //src_mac sa nachadza na inom porte - aktualizacia portu
+                        item.Port = i;
                         return list1;
                     }
                 }
@@ -136,7 +144,6 @@ namespace psip {
     public class CAMTimer {
         public static void timer(Form1 form) {
             var data = form.getData();
-            Console.WriteLine(data.Count + "---------");
             while (true) {
                 if (data.Count > 0) {
                     foreach (var item in data.ToList()) {
@@ -169,9 +176,9 @@ namespace psip {
             Controller con = new Controller(form);
 
             //spustenie snifferov na nasich 2 interfacoch
-            Thread thread = new Thread(() => ThreadWork.DoWork(communicator1, communicator, con, 0));
+            Thread thread = new Thread(() => ThreadWork.doWork(communicator1, communicator, con, 0));
             thread.Start();
-            Thread thread2 = new Thread(() => ThreadWork.DoWork(communicator, communicator1, con, 2));
+            Thread thread2 = new Thread(() => ThreadWork.doWork(communicator, communicator1, con, 2));
             thread2.Start();
             //timer thread
             Thread thread3 = new Thread(() => CAMTimer.timer(form));

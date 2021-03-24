@@ -29,7 +29,6 @@ namespace psip
         /// </summary>
         private void InitializeComponent()
         {
-            this.button1 = new System.Windows.Forms.Button();
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.resetButton = new System.Windows.Forms.Button();
             this.textBox2 = new System.Windows.Forms.TextBox();
@@ -49,16 +48,6 @@ namespace psip
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
             // 
-            // button1
-            // 
-            this.button1.Location = new System.Drawing.Point(27, 39);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
-            this.button1.TabIndex = 0;
-            this.button1.Text = "S_ICMP";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
-            // 
             // textBox1
             // 
             this.textBox1.Location = new System.Drawing.Point(161, 50);
@@ -70,7 +59,7 @@ namespace psip
             // 
             // resetButton
             // 
-            this.resetButton.Location = new System.Drawing.Point(27, 68);
+            this.resetButton.Location = new System.Drawing.Point(27, 116);
             this.resetButton.Name = "resetButton";
             this.resetButton.Size = new System.Drawing.Size(75, 23);
             this.resetButton.TabIndex = 3;
@@ -80,7 +69,7 @@ namespace psip
             // 
             // textBox2
             // 
-            this.textBox2.Location = new System.Drawing.Point(285, 50);
+            this.textBox2.Location = new System.Drawing.Point(652, 50);
             this.textBox2.Multiline = true;
             this.textBox2.Name = "textBox2";
             this.textBox2.ReadOnly = true;
@@ -98,7 +87,7 @@ namespace psip
             // 
             // textBox4
             // 
-            this.textBox4.Location = new System.Drawing.Point(652, 50);
+            this.textBox4.Location = new System.Drawing.Point(285, 50);
             this.textBox4.Multiline = true;
             this.textBox4.Name = "textBox4";
             this.textBox4.ReadOnly = true;
@@ -231,7 +220,6 @@ namespace psip
             this.Controls.Add(this.textBox2);
             this.Controls.Add(this.resetButton);
             this.Controls.Add(this.textBox1);
-            this.Controls.Add(this.button1);
             this.Name = "Form1";
             this.Text = "Form1";
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
@@ -241,8 +229,6 @@ namespace psip
         }
 
         #endregion
-
-        private System.Windows.Forms.Button button1;
         private System.Windows.Forms.TextBox textBox1;
         private System.Windows.Forms.Button resetButton;
         private System.Windows.Forms.TextBox textBox2;

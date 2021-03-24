@@ -13,8 +13,8 @@ namespace psip {
 
     public partial class Form1 : Form {
         
-        public List<CAMTable> Data { get; set; }
-        public int time = 10;
+        public List<CAMTable> Data { get; set; }//list CAM zaznamov
+        public int time = 60;//defaultny timer
 
         //aktualizuje statistiky
         public void updateStats(int[,] arr, int i) {
@@ -37,68 +37,6 @@ namespace psip {
 
         public int getTime() {
             return this.time;
-        }
-
-        private void button1_Click(object sender, EventArgs e) {
-            // Retrieve the device list from the local machine
-            IList<LivePacketDevice> allDevices = LivePacketDevice.AllLocalMachine;
-           /* textBox1.Clear();
-            if (allDevices.Count == 0)
-            {
-                textBox1.AppendText("No interfaces found! Make sure WinPcap is installed." + Environment.NewLine);
-                return;
-            }*/
-
-            // Print the list
-           /* for (int i = 0; i != allDevices.Count; ++i)
-            {
-                LivePacketDevice device = allDevices[i];
-                textBox1.AppendText((i + 1) + ". " + device.Name);
-                if (device.Description != null)
-                    textBox1.AppendText(" (" + device.Description + ")" + Environment.NewLine);
-                else
-                    textBox1.AppendText(" (No description available)" + Environment.NewLine);
-            }*/
-
-
-            PacketDevice selectedDevice = allDevices[0];
-
-            using (PacketCommunicator communicator = selectedDevice.Open(100, PacketDeviceOpenAttributes.Promiscuous, 1000)) {
-                communicator.SendPacket(BuildDummyPacket());
-            }
-
-            Packet BuildDummyPacket() {
-                EthernetLayer ethernetLayer =
-                    new EthernetLayer {
-                        Source = new MacAddress("01:01:01:01:01:01"),
-                        Destination = new MacAddress("02:02:02:02:02:02"),
-                        EtherType = EthernetType.None, // Will be filled automatically.
-                    };
-
-                IpV4Layer ipV4Layer =
-                    new IpV4Layer {
-                        Source = new IpV4Address("1.2.3.4"),
-                        CurrentDestination = new IpV4Address("11.22.33.44"),
-                        Fragmentation = IpV4Fragmentation.None,
-                        HeaderChecksum = null, // Will be filled automatically.
-                        Identification = 123,
-                        Options = IpV4Options.None,
-                        Protocol = null, // Will be filled automatically.
-                        Ttl = 100,
-                        TypeOfService = 0,
-                    };
-
-                IcmpEchoLayer icmpLayer =
-                    new IcmpEchoLayer {
-                        Checksum = null, // Will be filled automatically.
-                        Identifier = 456,
-                        SequenceNumber = 800,
-                    };
-
-                PacketBuilder builder = new PacketBuilder(ethernetLayer, ipV4Layer, icmpLayer);
-
-                return builder.Build(DateTime.Now);
-            }
         }
 
         //obnovi tabulku
@@ -135,14 +73,13 @@ namespace psip {
             dataGridView1.DataSource = data;
         }
 
-        //nastavi dlzku casovacu ak je zadana ako int
+        //nastavi dlzku casovacu ak je zadana ako int a je vacsi ako 0
         private void timerButton_Click(object sender, EventArgs e) {
+            int tim = this.time;
             try {
-                this.time = Int32.Parse(textBox5.Text);
-                foreach (var item in this.Data.ToList()) {
-                   item.Timer = this.time;
-                }
-                refreshTable();
+                tim = Int32.Parse(textBox5.Text);
+                if (tim > 0)
+                    this.time = tim;
             } catch {
                 Console.WriteLine("Zle zadane cislo, platny iba format int");
             }
