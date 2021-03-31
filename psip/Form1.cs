@@ -8,6 +8,7 @@ using PcapDotNet.Packets;
 using PcapDotNet.Packets.Ethernet;
 using PcapDotNet.Packets.Icmp;
 using PcapDotNet.Packets.IpV4;
+using System.Text.RegularExpressions;
 
 namespace psip {
 
@@ -15,6 +16,8 @@ namespace psip {
         
         public List<CAMTable> Data { get; set; }//list CAM zaznamov
         public int time = 60;//defaultny timer
+
+        public List<Filter> Filter_Data { get; set; } //list s filtrami
 
         //aktualizuje statistiky
         public void updateStats(int[,] arr, int i) {
@@ -28,9 +31,17 @@ namespace psip {
         //inicializacia
         public Form1() {
             Data = Controller.InitTable();
+            Filter_Data = Controller.InitFilter();
             InitializeComponent();
+            comboBox1.SelectedIndex = 0;
+            comboBox2.SelectedIndex = 0;
+            comboBox3.SelectedIndex = 0;
+            protocolCombo.SelectedIndex = 0;
         }
 
+        public List<Filter> getFilterData() {
+            return this.Filter_Data;
+        }
         public List<CAMTable> getData() {
             return this.Data;
         }
@@ -49,6 +60,20 @@ namespace psip {
 
                 //ocisluje riadky
                 foreach (DataGridViewRow row in dataGridView1.Rows)
+                    row.Cells["Id"].Value = (row.Index + 1).ToString();
+            }));
+        }
+
+        //obnovi tabulku filtrov
+        public void refreshFilter() {
+            var filter_data = this.Filter_Data;
+
+            dataGridView2.Invoke(new MethodInvoker(() => {
+                dataGridView2.DataSource = null;
+                dataGridView2.DataSource = filter_data;
+
+                //ocisluje riadky
+                foreach (DataGridViewRow row in dataGridView2.Rows)
                     row.Cells["Id"].Value = (row.Index + 1).ToString();
             }));
         }
@@ -88,6 +113,46 @@ namespace psip {
         private void textBox5_MouseDown(object sender, MouseEventArgs e) {
             textBox5.Text = "";
             textBox5.ForeColor = Color.Black;
+        }
+
+        private bool isInputCorrect(string src_ip, string dst_ip, string src_mac, string dst_mac, string src_port, string dst_port) {
+            IpV4Address ip;
+            MacAddress mac;
+            short port;
+            /*Regex ip = new Regex(@"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b");*/
+            if (src_ip != "any" && !IpV4Address.TryParse(src_ip, out ip)) return false;
+            if (dst_ip != "any" && !IpV4Address.TryParse(dst_ip, out ip)) return false;
+            //if (src_mac != "any" && !MacAddress.TryParse(src_mac, out mac)) return false;
+            //if (dst_mac != "any" && !MacAddress.TryParse(dst_mac, out mac)) return false;
+            if (src_port != "any" && !short.TryParse(src_port, out port)) return false;
+            if (dst_port != "any" && !short.TryParse(dst_port, out port)) return false;
+            return true;
+        }
+
+        private void filterButton_Click(object sender, EventArgs e) {
+            //Console.WriteLine(comboBox1.SelectedItem.ToString() + comboBox2.SelectedItem.ToString() + src_ip_text.Text + dst_ip_text.Text + src_mac_text.Text + dst_mac_text.Text);
+            if (!isInputCorrect(src_ip_text.Text, dst_ip_text.Text, src_mac_text.Text, dst_mac_text.Text, src_port_text.Text, dst_port_text.Text)) return;
+            Controller.addToFilter(this.Filter_Data, comboBox1.SelectedItem.ToString(), comboBox2.SelectedItem.ToString(), src_ip_text.Text, dst_ip_text.Text, src_mac_text.Text, dst_mac_text.Text, protocolCombo.SelectedItem.ToString(), src_port_text.Text, dst_port_text.Text);
+            refreshFilter();
+        }
+
+        private void delSelectedButton_Click(object sender, EventArgs e) {
+            if (this.Filter_Data.Count != 0) {
+                var index = dataGridView2.CurrentCell.RowIndex;
+                Console.WriteLine(index);
+                this.Filter_Data.RemoveAt(index);
+                refreshFilter();
+            }
+
+        }
+
+        private void clearFilterButton_Click(object sender, EventArgs e) {
+            var data = this.Filter_Data;
+
+            foreach (var item in data.ToList()) {
+                data.Remove(item);
+            }
+            refreshFilter();
         }
     }
 }

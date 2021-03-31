@@ -12,18 +12,24 @@ namespace psip {
     public class ThreadWork {
         public static void doWork(PacketCommunicator communicator, PacketCommunicator communicator1, Controller con, int i) {
             Packet packet;
+            int ind = 0;
+            if (i == 0) ind = 2;
             do {
                 PacketCommunicatorReceiveResult result = communicator.ReceivePacket(out packet);
                 switch (result) {
                     case PacketCommunicatorReceiveResult.Timeout:
                         continue;
                     case PacketCommunicatorReceiveResult.Ok: //ak je packet v poriadku, zapocitaju sa jeho statistiky a ak sa ma predoslat tak sa preposle
-                        con.checkStats(packet, i);
-                        con.updateTable(i, packet.Ethernet.Source);
+                        if (Controller.isAllowedFilter(packet, "In", i.ToString())) { //skontroluje filtre v smere in
+                            con.checkStats(packet, i);
+                            con.updateTable(i, packet.Ethernet.Source);
+                        }
 
                         if (con.isInTable(i, packet.Ethernet.Destination)) {//zisti ci sa ma packet preposlat
-                            communicator1.SendPacket(packet); //odoslanie packet + jeho statistiky
-                            con.checkStats(packet, i + 1);
+                            if (Controller.isAllowedFilter(packet, "Out", ind.ToString())) { //skontroluje filtre v smere out <----------------------tu doriesit porty
+                                communicator1.SendPacket(packet); //odoslanie packet + jeho statistiky
+                                con.checkStats(packet, i + 1);
+                            }
                             break;
                         }
 
@@ -131,6 +137,58 @@ namespace psip {
             var list = new List<CAMTable>();
             return list;
         }
+        
+        //inicializacia tabulky filtrov
+        public static List<Filter> InitFilter() {
+            var list = new List<Filter>();
+            return list;
+        }
+
+        public static List<Filter> addToFilter(List<Filter> list1, string inout, string port, string srcip, string dstip, string srcmac, string dstmac, string protocol, string sport, string dport) {
+            Filter list = new Filter() { InOut = inout, SrcIp = srcip, Port = port, DstIp = dstip, SrcMac = srcmac, DstMac = dstmac, Protocol = protocol, SPort = sport, DPort = dport};
+            list1.Add(list);
+            return list1;
+        }
+
+        public static bool isAllowedFilter(Packet packet, string inout, string port) { 
+            var list = form.getFilterData();
+
+            foreach (var item in list) {
+                if (item.InOut == inout) {
+                    if (item.Port == port) {
+                        if (item.SrcIp == "any" || new IpV4Address(item.SrcIp).Equals(packet.Ethernet.IpV4.Source)) {
+                            if (item.DstIp == "any" || new IpV4Address(item.DstIp).Equals(packet.Ethernet.IpV4.Destination)) {
+                                if (item.SrcMac == "any" || new MacAddress(item.SrcMac).Equals(packet.Ethernet.Source)) {
+                                    if (item.DstMac == "any" || new MacAddress(item.DstMac).Equals(packet.Ethernet.Destination)) {
+                                        if (item.Protocol == "any" || (item.Protocol == "Tcp" && IpV4Protocol.Tcp == packet.Ethernet.IpV4.Protocol) || (item.Protocol == "Udp" && IpV4Protocol.Tcp == packet.Ethernet.IpV4.Protocol) || (item.Protocol == "Icmp" && IpV4Protocol.InternetControlMessageProtocol == packet.Ethernet.IpV4.Protocol)) { //pridat nech moze byt aj protokol filter<<<<<<<<<<<<<<<<<<<<----------------------------------------------------------------------------------
+                                            //Console.WriteLine(packet.Ethernet.IpV4.Icmp.Code);
+                                            if (item.Protocol == "any")
+                                                return true;
+                                            else if (item.Protocol == "Tcp") {
+                                                if (item.SPort == "any" || short.Parse(item.SPort) == packet.Ethernet.IpV4.Tcp.SourcePort) {
+                                                    if (item.DPort == "any" || short.Parse(item.DPort) == packet.Ethernet.IpV4.Tcp.DestinationPort)
+                                                        return false;
+                                                }
+                                            } else if (item.Protocol == "Udp") {
+                                                if (item.SPort == "any" || short.Parse(item.SPort) == packet.Ethernet.IpV4.Udp.SourcePort) {
+                                                    if (item.DPort == "any" || short.Parse(item.DPort) == packet.Ethernet.IpV4.Udp.DestinationPort)
+                                                        return false;
+                                                }
+                                            } else if (item.Protocol == "Icmp") {
+                                                if (item.SPort == "any" || Byte.Parse(item.SPort) == packet.Ethernet.IpV4.Icmp.Code || Byte.Parse(item.DPort) == packet.Ethernet.IpV4.Icmp.Code) {
+                                                    return false;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return true;
+        }
     }
 
     public class CAMTable {
@@ -140,6 +198,18 @@ namespace psip {
         public int Timer { get; set; }
     }
 
+    public class Filter {
+        public string Id { get; set; }
+        public string InOut { get; set; }
+        public string Port { get; set; }
+        public string SrcIp { get; set; }
+        public string DstIp { get; set; }
+        public string SrcMac { get; set; }
+        public string DstMac { get; set; }
+        public string Protocol { get; set; }
+        public string SPort { get; set; }
+        public string DPort { get; set; }
+    }
     //sluzi na aktualizaciu casu a nasledne vymazanie zaznamu po uplynuti casu
     public class CAMTimer {
         public static void timer(Form1 form) {
