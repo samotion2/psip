@@ -19,15 +19,6 @@ namespace psip {
 
         public List<Filter> Filter_Data { get; set; } //list s filtrami
 
-        //aktualizuje statistiky
-        public void updateStats(int[,] arr, int i) {
-            TextBox[] textboxarr = new TextBox[4] {textBox1, textBox2, textBox3, textBox4};
-
-            textboxarr[i].Invoke(new MethodInvoker(() => {
-                textboxarr[i].Text = "Ethernet: " + arr[i, 0] + "\r\nARP: " + arr[i, 1] + "\r\nIP: " + arr[i, 2] + "\r\nTCP: " + arr[i, 3] + "\r\nUDP: " + arr[i, 4] + "\r\nICMP: " + arr[i, 5] + "\r\nHTTP: " + arr[i, 6];
-            }));
-        }
-
         //inicializacia
         public Form1() {
             Data = Controller.InitTable();
@@ -35,8 +26,31 @@ namespace psip {
             InitializeComponent();
             comboBox1.SelectedIndex = 0;
             comboBox2.SelectedIndex = 0;
-            comboBox3.SelectedIndex = 0;
             protocolCombo.SelectedIndex = 0;
+            showInterfaces();
+        }
+
+        //vypise list interfacov
+        private void showInterfaces() {
+            IList<LivePacketDevice> allDevices = LivePacketDevice.AllLocalMachine;
+
+            for (int i = 0; i != allDevices.Count; ++i) {
+                LivePacketDevice device = allDevices[i];
+                device_list_text.AppendText((i + 1) + ". " + device.Name);
+                if (device.Description != null)
+                    device_list_text.AppendText(" (" + device.Description + ")" + Environment.NewLine);
+                else
+                    device_list_text.AppendText(" (No description available)" + Environment.NewLine);
+            }
+        }
+
+        //aktualizuje statistiky
+        public void updateStats(int[,] arr, int i) {
+            TextBox[] textboxarr = new TextBox[4] { textBox1, textBox2, textBox3, textBox4 };
+
+            textboxarr[i].Invoke(new MethodInvoker(() => {
+                textboxarr[i].Text = "Ethernet: " + arr[i, 0] + "\r\nARP: " + arr[i, 1] + "\r\nIP: " + arr[i, 2] + "\r\nTCP: " + arr[i, 3] + "\r\nUDP: " + arr[i, 4] + "\r\nICMP: " + arr[i, 5] + "\r\nHTTP: " + arr[i, 6];
+            }));
         }
 
         public List<Filter> getFilterData() {
@@ -115,15 +129,15 @@ namespace psip {
             textBox5.ForeColor = Color.Black;
         }
 
+        //skontroluje ci je zadany input do filtra spravne
         private bool isInputCorrect(string src_ip, string dst_ip, string src_mac, string dst_mac, string src_port, string dst_port) {
             IpV4Address ip;
-            MacAddress mac;
             short port;
-            /*Regex ip = new Regex(@"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b");*/
+            Regex mac = new Regex(@"^[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}$");
             if (src_ip != "any" && !IpV4Address.TryParse(src_ip, out ip)) return false;
             if (dst_ip != "any" && !IpV4Address.TryParse(dst_ip, out ip)) return false;
-            //if (src_mac != "any" && !MacAddress.TryParse(src_mac, out mac)) return false;
-            //if (dst_mac != "any" && !MacAddress.TryParse(dst_mac, out mac)) return false;
+            if (src_mac != "any" && !mac.IsMatch(src_mac)) return false;
+            if (dst_mac != "any" && !mac.IsMatch(dst_mac)) return false;
             if (src_port != "any" && !short.TryParse(src_port, out port)) return false;
             if (dst_port != "any" && !short.TryParse(dst_port, out port)) return false;
             return true;
@@ -131,11 +145,16 @@ namespace psip {
 
         private void filterButton_Click(object sender, EventArgs e) {
             //Console.WriteLine(comboBox1.SelectedItem.ToString() + comboBox2.SelectedItem.ToString() + src_ip_text.Text + dst_ip_text.Text + src_mac_text.Text + dst_mac_text.Text);
-            if (!isInputCorrect(src_ip_text.Text, dst_ip_text.Text, src_mac_text.Text, dst_mac_text.Text, src_port_text.Text, dst_port_text.Text)) return;
+            wrongInputLabel.Visible = false;
+            if (!isInputCorrect(src_ip_text.Text, dst_ip_text.Text, src_mac_text.Text, dst_mac_text.Text, src_port_text.Text, dst_port_text.Text)) {
+                wrongInputLabel.Visible = true;
+                return;
+            }
             Controller.addToFilter(this.Filter_Data, comboBox1.SelectedItem.ToString(), comboBox2.SelectedItem.ToString(), src_ip_text.Text, dst_ip_text.Text, src_mac_text.Text, dst_mac_text.Text, protocolCombo.SelectedItem.ToString(), src_port_text.Text, dst_port_text.Text);
             refreshFilter();
         }
 
+        //vymaze oznaceny filter
         private void delSelectedButton_Click(object sender, EventArgs e) {
             if (this.Filter_Data.Count != 0) {
                 var index = dataGridView2.CurrentCell.RowIndex;
@@ -146,6 +165,7 @@ namespace psip {
 
         }
 
+        //vymaze vsetky filtre
         private void clearFilterButton_Click(object sender, EventArgs e) {
             var data = this.Filter_Data;
 

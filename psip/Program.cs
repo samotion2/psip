@@ -144,12 +144,14 @@ namespace psip {
             return list;
         }
 
+        //prida zaznam do filtra
         public static List<Filter> addToFilter(List<Filter> list1, string inout, string port, string srcip, string dstip, string srcmac, string dstmac, string protocol, string sport, string dport) {
             Filter list = new Filter() { InOut = inout, SrcIp = srcip, Port = port, DstIp = dstip, SrcMac = srcmac, DstMac = dstmac, Protocol = protocol, SPort = sport, DPort = dport};
             list1.Add(list);
             return list1;
         }
 
+        //zisti ci je dany packet povoleny alebo nie
         public static bool isAllowedFilter(Packet packet, string inout, string port) { 
             var list = form.getFilterData();
 
@@ -162,20 +164,16 @@ namespace psip {
                                     if (item.DstMac == "any" || new MacAddress(item.DstMac).Equals(packet.Ethernet.Destination)) {
                                         if (item.Protocol == "any" || (item.Protocol == "Tcp" && IpV4Protocol.Tcp == packet.Ethernet.IpV4.Protocol) || (item.Protocol == "Udp" && IpV4Protocol.Tcp == packet.Ethernet.IpV4.Protocol) || (item.Protocol == "Icmp" && IpV4Protocol.InternetControlMessageProtocol == packet.Ethernet.IpV4.Protocol)) { //pridat nech moze byt aj protokol filter<<<<<<<<<<<<<<<<<<<<----------------------------------------------------------------------------------
                                             //Console.WriteLine(packet.Ethernet.IpV4.Icmp.Code);
-                                            if (item.Protocol == "any")
-                                                return true;
-                                            else if (item.Protocol == "Tcp") {
-                                                if (item.SPort == "any" || short.Parse(item.SPort) == packet.Ethernet.IpV4.Tcp.SourcePort) {
-                                                    if (item.DPort == "any" || short.Parse(item.DPort) == packet.Ethernet.IpV4.Tcp.DestinationPort)
-                                                        return false;
+                                            if (item.Protocol == "Tcp") {
+                                                if ((item.SPort != "any" && short.Parse(item.SPort) == packet.Ethernet.IpV4.Tcp.SourcePort) || (item.DPort != "any" && short.Parse(item.DPort) == packet.Ethernet.IpV4.Tcp.DestinationPort)) {
+                                                    return false;
                                                 }
                                             } else if (item.Protocol == "Udp") {
-                                                if (item.SPort == "any" || short.Parse(item.SPort) == packet.Ethernet.IpV4.Udp.SourcePort) {
-                                                    if (item.DPort == "any" || short.Parse(item.DPort) == packet.Ethernet.IpV4.Udp.DestinationPort)
-                                                        return false;
+                                                if ((item.SPort != "any" && short.Parse(item.SPort) == packet.Ethernet.IpV4.Udp.SourcePort) || (item.DPort != "any" && short.Parse(item.DPort) == packet.Ethernet.IpV4.Udp.DestinationPort)) {
+                                                    return false;
                                                 }
                                             } else if (item.Protocol == "Icmp") {
-                                                if (item.SPort == "any" || Byte.Parse(item.SPort) == packet.Ethernet.IpV4.Icmp.Code || Byte.Parse(item.DPort) == packet.Ethernet.IpV4.Icmp.Code) {
+                                                if ((item.SPort != "any" && Byte.Parse(item.SPort) == packet.Ethernet.IpV4.Icmp.Code) || (item.DPort != "any" && Byte.Parse(item.DPort) == packet.Ethernet.IpV4.Icmp.Code)) {
                                                     return false;
                                                 }
                                             }
