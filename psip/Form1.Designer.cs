@@ -68,8 +68,8 @@ namespace psip
             this.protocolCombo = new System.Windows.Forms.ComboBox();
             this.wrongInputLabel = new System.Windows.Forms.Label();
             this.label16 = new System.Windows.Forms.Label();
-            this.device_list_text = new System.Windows.Forms.TextBox();
             this.label17 = new System.Windows.Forms.Label();
+            this.listBox1 = new System.Windows.Forms.ListBox();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).BeginInit();
             this.SuspendLayout();
@@ -419,11 +419,14 @@ namespace psip
             this.protocolCombo.Items.AddRange(new object[] {
             "Icmp",
             "Tcp",
-            "Udp"});
+            "Udp",
+            "Arp",
+            "any"});
             this.protocolCombo.Location = new System.Drawing.Point(927, 520);
             this.protocolCombo.Name = "protocolCombo";
             this.protocolCombo.Size = new System.Drawing.Size(121, 24);
             this.protocolCombo.TabIndex = 41;
+            this.protocolCombo.SelectedIndexChanged += new System.EventHandler(this.protocolCombo_SelectedIndexChanged);
             // 
             // wrongInputLabel
             // 
@@ -446,15 +449,6 @@ namespace psip
             this.label16.TabIndex = 43;
             this.label16.Text = "Blacklist";
             // 
-            // device_list_text
-            // 
-            this.device_list_text.Location = new System.Drawing.Point(944, 51);
-            this.device_list_text.Multiline = true;
-            this.device_list_text.Name = "device_list_text";
-            this.device_list_text.ReadOnly = true;
-            this.device_list_text.Size = new System.Drawing.Size(498, 407);
-            this.device_list_text.TabIndex = 44;
-            // 
             // label17
             // 
             this.label17.AutoSize = true;
@@ -465,13 +459,22 @@ namespace psip
             this.label17.TabIndex = 45;
             this.label17.Text = "Device list";
             // 
+            // listBox1
+            // 
+            this.listBox1.FormattingEnabled = true;
+            this.listBox1.ItemHeight = 16;
+            this.listBox1.Location = new System.Drawing.Point(941, 51);
+            this.listBox1.Name = "listBox1";
+            this.listBox1.Size = new System.Drawing.Size(502, 404);
+            this.listBox1.TabIndex = 46;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1512, 728);
+            this.Controls.Add(this.listBox1);
             this.Controls.Add(this.label17);
-            this.Controls.Add(this.device_list_text);
             this.Controls.Add(this.label16);
             this.Controls.Add(this.wrongInputLabel);
             this.Controls.Add(this.protocolCombo);
@@ -560,8 +563,8 @@ namespace psip
         private System.Windows.Forms.ComboBox protocolCombo;
         private System.Windows.Forms.Label wrongInputLabel;
         private System.Windows.Forms.Label label16;
-        private System.Windows.Forms.TextBox device_list_text;
         private System.Windows.Forms.Label label17;
+        private System.Windows.Forms.ListBox listBox1;
     }
 }
 

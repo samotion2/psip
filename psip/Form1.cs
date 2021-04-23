@@ -36,11 +36,10 @@ namespace psip {
 
             for (int i = 0; i != allDevices.Count; ++i) {
                 LivePacketDevice device = allDevices[i];
-                device_list_text.AppendText((i + 1) + ". " + device.Name);
                 if (device.Description != null)
-                    device_list_text.AppendText(" (" + device.Description + ")" + Environment.NewLine);
+                    listBox1.Items.Add( i + ". " + device.Description + Environment.NewLine);
                 else
-                    device_list_text.AppendText(" (No description available)" + Environment.NewLine);
+                    listBox1.Items.Add(" (No description available)" + Environment.NewLine);
             }
         }
 
@@ -173,6 +172,18 @@ namespace psip {
                 data.Remove(item);
             }
             refreshFilter();
+        }
+
+        private void protocolCombo_SelectedIndexChanged(object sender, EventArgs e) {
+            if (protocolCombo.SelectedItem == "Arp" || protocolCombo.SelectedItem == "any") {
+                src_port_text.Enabled = false;
+                src_port_text.Text = "any";
+                dst_port_text.Enabled = false;
+                dst_port_text.Text = "any";
+            } else {
+                src_port_text.Enabled = true;
+                dst_port_text.Enabled = true;
+            }
         }
     }
 }
